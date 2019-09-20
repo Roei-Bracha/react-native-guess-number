@@ -1,5 +1,5 @@
 import React, { useState , useRef, useEffect} from 'react';
-import { View, Text, StyleSheet , Alert , FlatList} from 'react-native'
+import { View, Text, StyleSheet , Alert , FlatList,Dimensions} from 'react-native'
 import NumberContainer from '../components/NumberContainer';
 import Card from '../components/Card';
 import MainButton from '../components/MainButton';
@@ -31,7 +31,17 @@ const renderListItem = (listLength,itemData)=>{
 const GameScreen = ({userChoice , onGameOver}) => {
     const initalGuest = generateRandomBetween(1, 100, userChoice)
     const [currentGuess, setCurrentGuess] = useState(initalGuest)
-    const [pastGuesses,setPassGuesses] = useState([initalGuest.toString()])
+    const [pastGuesses, setPassGuesses] = useState([initalGuest.toString()])
+    const [availableDeviceHeight, setAvailableDeviceHeight] = useState(Dimensions.get('window').height)
+    const [availableDeviceWidth, setAvailableDeviceWidth] = useState(Dimensions.get('window').width)
+    const updateLayout = () => {
+        setAvailableDeviceHeight(Dimensions.get('window').height)
+        setAvailableDeviceWidth(Dimensions.get('window').width)
+    }
+    useEffect(() => {
+        Dimensions.addEventListener('change', updateLayout)
+        return(()=>{Dimensions.removeEventListener('change',updateLayout)})
+    })
     const currentMin = useRef(1)
     const currentMax = useRef(100)
     const nextGuessHandler = direction => {
@@ -54,6 +64,23 @@ const GameScreen = ({userChoice , onGameOver}) => {
             onGameOver(pastGuesses.length)
         }
     },[currentGuess,userChoice,onGameOver])
+    
+    if (availableDeviceHeight< 500) {
+        return (
+            <View style={styles.screen}>
+                <Text>my guest is:</Text>
+                <View style={styles.landscapeControllers}>
+                    <MainButton onPress={nextGuessHandler.bind(this, "lower")}><Ionicons name={'md-remove'} size={24} color={"white"}/></MainButton>
+                    <NumberContainer>{currentGuess}</NumberContainer>
+                    <MainButton onPress={nextGuessHandler.bind(this, "higher")}><Ionicons name={'md-add'} size={24} color={"white"} /></MainButton>
+                </View>    
+                <View style={styles.listContainer}>
+                    <FlatList keyExtractor={item=>item} data={pastGuesses} renderItem={renderListItem.bind(this, pastGuesses.length)} contentContainerStyle={styles.list}/>
+                </View>
+            </View>
+        )
+    }
+    
     return (
         <View style={styles.screen}>
             <Text>my guest is:</Text>
@@ -78,12 +105,12 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: "row",
         justifyContent: "space-around",
-        marginTop: 20,
+        marginTop: Dimensions.get("window").height > 600 ? 20 : 10,
         width: 400,
         maxWidth:'90%'
     },
     listContainer: {
-        width: '60%',
+        width: Dimensions.get("window").width >500  ?  '60%' : '80%',
         flex:1
     },
     list: {
@@ -99,6 +126,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: 'space-around',
         width:'100%'
+    },
+    landscapeControllers: {
+        flexDirection: 'row',
+        justifyContent: "space-around",
+        alignItems: "center",
+        width:'80%'
     }
 })
 
